@@ -1,74 +1,98 @@
 <!DOCTYPE html>
 <html lang="zh-tw">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>資料輸入</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    .container { max-width: 500px; margin: auto; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; }
-    input, select, button { width: 100%; padding: 10px; font-size: 16px; }
-    button { background-color: #5cb85c; color: white; border: none; cursor: pointer; }
-    button:hover { background-color: #4cae4c; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>健康資料輸入系統</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 500px; margin: auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 8px; margin-bottom: 10px; }
+        button { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h2>平板資料輸入</h2>
-    <div class="form-group">
-      <label for="id">編號</label>
-      <input type="number" id="id" placeholder="請輸入編號">
+    <div class="container">
+        <h2>健康資料輸入</h2>
+        <div class="form-group">
+            <label for="id">編號</label>
+            <input type="number" id="id" required>
+        </div>
+        <div class="form-group">
+            <label>疾病</label>
+            <div>
+                <input type="checkbox" id="disease1" value="慢性病">
+                <label for="disease1">慢性病</label>
+                <input type="checkbox" id="disease2" value="感冒">
+                <label for="disease2">感冒</label>
+                <input type="checkbox" id="disease3" value="腸胃炎">
+                <label for="disease3">腸胃炎</label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>症狀</label>
+            <div>
+                <input type="checkbox" id="symptom1" value="咳嗽">
+                <label for="symptom1">咳嗽</label>
+                <input type="checkbox" id="symptom2" value="發燒">
+                <label for="symptom2">發燒</label>
+                <input type="checkbox" id="symptom3" value="流鼻水">
+                <label for="symptom3">流鼻水</label>
+            </div>
+        </div>
+        <button onclick="submitData()">送出資料</button>
     </div>
-    <div class="form-group">
-      <label for="disease">疾病</label>
-      <select id="disease">
-        <option value="感冒">感冒</option>
-        <option value="腸胃炎">腸胃炎</option>
-        <option value="慢性病">慢性病</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label for="symptom">症狀</label>
-      <input type="text" id="symptom" placeholder="請輸入症狀，例如咳嗽、發燒">
-    </div>
-    <button onclick="submitData()">送出資料</button>
-  </div>
 
-  <script>
-    const scriptUrl = "https://script.google.com/macros/s/AKfycbz5R87ObKteHN6upAX1bNz07jwGaVsaZljua9FlzUexallN6mx7Rk1iyOSt01wIaX45/exec";
-    
-    function submitData() {
-      const id = document.getElementById('id').value;
-      const disease = document.getElementById('disease').value;
-      const symptom = document.getElementById('symptom').value;
+    <script>
+        const scriptUrl = 'YOUR_GOOGLE_SCRIPT_URL'; // 替換為您的 Google Apps Script URL
 
-      // 確認資料是否填寫正確
-      if (!id || !disease || !symptom) {
-        alert('請完整填寫資料！');
-        return;
-      }
+        function getCheckedValues(name) {
+            return Array.from(document.querySelectorAll(`input[id^="${name}"]:checked`))
+                .map(cb => cb.value)
+                .join(', ');
+        }
 
-      // 建立資料物件
-      const data = { id, disease, symptom };
+        function submitData() {
+            const id = document.getElementById('id').value;
+            const diseases = getCheckedValues('disease');
+            const symptoms = getCheckedValues('symptom');
 
-      // 發送資料到 Apps Script
-      fetch(scriptUrl, {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' }
-      })
-      .then(response => response.text())
-      .then(result => {
-        alert('資料已成功送出！'); // 提示成功
-        console.log(result);
-      })
-      .catch(error => {
-        alert('發生錯誤，請稍後再試');
-        console.error(error);
-      });
-    }
-  </script>
+            if (!id) {
+                alert('請輸入編號');
+                return;
+            }
+
+            const data = {
+                id: id,
+                disease: diseases,
+                symptom: symptoms
+            };
+
+            fetch(scriptUrl, {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                alert(result.message);
+                if (result.status === 'success') {
+                    document.getElementById('id').value = '';
+                    document.querySelectorAll('input[type="checkbox"]')
+                        .forEach(cb => cb.checked = false);
+                }
+            })
+            .catch(error => {
+                console.error('錯誤:', error);
+                alert('發生錯誤，請稍後再試');
+            });
+        }
+    </script>
 </body>
 </html>
